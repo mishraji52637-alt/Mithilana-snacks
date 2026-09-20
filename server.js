@@ -124,3 +124,19 @@ app.patch('/api/admin/orders/:orderNo',adminAuth,async(req,res)=>{if(!STATUS.inc
 app.get('/admin',(_req,res)=>res.sendFile(path.join(ROOT,'admin.html')));
 app.get('*',(_req,res)=>res.sendFile(path.join(ROOT,'index.html')));
 initDb().then(()=>app.listen(PORT,()=>console.log(`Mithilana server running on port ${PORT}${pool?' with PostgreSQL':' with JSON storage'}`))).catch(e=>{console.error('Database initialization failed:',e);process.exit(1);});
+// WhatsApp Webhook Setup
+app.get('/webhook', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode === 'subscribe' && token === "mithilana_secret_token_123") {
+    res.status(200).send(challenge);
+  } else {
+    res.sendStatus(403);
+  }
+});
+
+app.post('/webhook', (req, res) => {
+  res.status(200).send('EVENT_RECEIVED');
+});
