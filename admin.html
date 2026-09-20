@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mithilana Admin Panel</title>
+<style>
+:root{--brown:#54251d;--gold:#b88328;--cream:#fffaf0;--bg:#f6f2eb;--muted:#6f625d}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#241915}.wrap{width:min(1250px,94%);margin:auto}.top{background:var(--brown);color:#fff;padding:18px 0}.topin{display:flex;justify-content:space-between;align-items:center;gap:15px}.brand{font-size:22px;font-weight:800}.btn{border:0;border-radius:8px;padding:10px 15px;font-weight:800;cursor:pointer}.btn-main{background:var(--brown);color:#fff}.btn-light{background:#fff;color:var(--brown);border:1px solid #ddd}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin:22px 0}.stat{background:#fff;border:1px solid #e8dfd5;border-radius:12px;padding:20px}.stat small{color:var(--muted)}.stat strong{display:block;font-size:28px;color:var(--brown);margin-top:8px}.panel{background:#fff;border:1px solid #e8dfd5;border-radius:12px;padding:20px;margin-bottom:20px}.toolbar{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}.toolbar input{padding:11px;border:1px solid #ddd;border-radius:7px;min-width:260px}.table-wrap{overflow:auto;margin-top:15px}table{width:100%;border-collapse:collapse;min-width:950px}th,td{padding:12px;border-bottom:1px solid #eee;text-align:left;vertical-align:top}th{font-size:12px;text-transform:uppercase;color:var(--muted);background:#faf7f1}td{font-size:14px}.status{padding:6px;border:1px solid #ddd;border-radius:6px;background:#fff}.items{white-space:normal;line-height:1.5}.login{min-height:100vh;display:grid;place-items:center}.login-card{background:#fff;padding:30px;border-radius:15px;box-shadow:0 15px 45px rgba(0,0,0,.1);width:min(420px,92%)}.login-card h1{color:var(--brown);margin-top:0}.login-card input{width:100%;padding:13px;border:1px solid #ddd;border-radius:7px;margin:12px 0;font-size:16px}.error{color:#a32920;margin-top:10px}.hidden{display:none}.muted{color:var(--muted)}@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.topin{align-items:flex-start}}@media(max-width:500px){.grid{grid-template-columns:1fr}.toolbar input{min-width:100%;width:100%}}
+</style>
+</head>
+<body>
+<div id="loginView" class="login">
+  <div class="login-card">
+    <h1>Mithilana Admin</h1>
+    <p class="muted">Private order management panel.</p>
+    <form onsubmit="login(event)"><input id="password" type="password" placeholder="Admin password" required><button class="btn btn-main" style="width:100%">Login</button></form>
+    <div id="loginError" class="error"></div>
+  </div>
+</div>
+
+<div id="appView" class="hidden">
+<header class="top"><div class="wrap topin"><div class="brand">Mithilana • Admin Panel</div><div><a class="btn btn-light" href="/">Store</a> <button class="btn btn-light" onclick="logout()">Logout</button></div></div></header>
+<main class="wrap">
+  <div class="grid">
+    <div class="stat"><small>Total Orders</small><strong id="totalOrders">0</strong></div>
+    <div class="stat"><small>Paid Revenue</small><strong id="paidRevenue">₹0</strong></div>
+    <div class="stat"><small>Pending Payments</small><strong id="pendingPayments">0</strong></div>
+    <div class="stat"><small>Active Orders</small><strong id="activeOrders">0</strong></div>
+  </div>
+  <section class="panel">
+    <div class="toolbar"><div><h2 style="margin:0;color:#54251d">Orders</h2><div class="muted" style="margin-top:5px">Search, view customer details and update order status.</div></div><input id="search" placeholder="Search order, name, phone, city..." oninput="renderOrders()"></div>
+    <div class="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Placed</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
+  </section>
+</main>
+</div>
+<script>
+let orders=[];
+async function api(url,options={}){const r=await fetch(url,options);const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Request failed');return d;}
+async function login(e){e.preventDefault();document.getElementById('loginError').textContent='';try{await api('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:document.getElementById('password').value})});showApp();}catch(err){document.getElementById('loginError').textContent=err.message}}
+function showApp(){document.getElementById('loginView').classList.add('hidden');document.getElementById('appView').classList.remove('hidden');loadOrders()}
+async function loadOrders(){try{const d=await api('/api/admin/orders');orders=d.orders;document.getElementById('totalOrders').textContent=d.summary.totalOrders;document.getElementById('paidRevenue').textContent='₹'+d.summary.paidRevenue.toLocaleString('en-IN');document.getElementById('pendingPayments').textContent=d.summary.pendingPayments;document.getElementById('activeOrders').textContent=d.summary.activeOrders;renderOrders()}catch(err){if(err.message.includes('login')){document.getElementById('appView').classList.add('hidden');document.getElementById('loginView').classList.remove('hidden')}else alert(err.message)}}
+function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function renderOrders(){const q=document.getElementById('search').value.toLowerCase().trim();const rows=orders.filter(o=>JSON.stringify(o).toLowerCase().includes(q));document.getElementById('ordersBody').innerHTML=rows.map(o=>`<tr><td><b>${esc(o.orderNo)}</b><br><span class="muted">${esc(o.razorpayPaymentId||'')}</span></td><td><b>${esc(o.name)}</b><br>${esc(o.phone)}<br>${esc(o.email||'')}<br>${esc(o.address)}, ${esc(o.city)}, ${esc(o.state)} - ${esc(o.pin)}</td><td class="items">${o.items.map(i=>`${esc(i.size)} × ${i.qty} = ₹${i.price*i.qty}`).join('<br>')}</td><td><b>₹${Number(o.total).toLocaleString('en-IN')}</b></td><td>${esc(o.payment)}<br><b>${esc(o.paymentStatus)}</b></td><td><select class="status" onchange="changeStatus('${esc(o.orderNo)}',this.value)">${['New','Processing','Shipped','Delivered','Cancelled','Payment Pending','Payment Failed'].map(s=>`<option ${s===o.orderStatus?'selected':''}>${s}</option>`).join('')}</select></td><td>${new Date(o.placedAt).toLocaleString('en-IN')}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">No orders found.</td></tr>'}
+async function changeStatus(orderNo,status){try{await api('/api/admin/orders/'+encodeURIComponent(orderNo),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderStatus:status})});await loadOrders()}catch(err){alert(err.message);await loadOrders()}}
+async function logout(){try{await api('/api/admin/logout',{method:'POST'});}catch(_){}location.reload()}
+</script>
+</body>
+</html>

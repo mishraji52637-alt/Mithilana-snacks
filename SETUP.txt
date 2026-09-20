@@ -1,0 +1,44 @@
+MITHILANA v3 - Razorpay + WhatsApp OTP LOGIN + persistent customer session + order notifications
+
+WHAT THIS VERSION ADDS
+1. Customer logs in once using WhatsApp OTP.
+2. Login is remembered for 180 days using a secure HttpOnly cookie.
+3. OTP is required again after logout/session expiry (or if the browser/device loses the cookie).
+4. Orders require the customer to be logged in with the same WhatsApp number.
+5. COD and Razorpay orders are stored server-side.
+6. Customer receives WhatsApp order confirmation/status notifications through approved WhatsApp templates.
+7. Admin receives order and status notifications.
+8. Admin status choices include New, Processing, Picked, Out for Delivery, Delivered and Cancelled.
+9. PostgreSQL is supported through DATABASE_URL and is recommended for Render persistence.
+10. If DATABASE_URL is not set, the app falls back to data/orders.json for local/testing use. A normal Render filesystem should NOT be treated as permanent storage.
+
+RENDER DEPLOYMENT
+- Build: npm install
+- Start: npm start
+- Add a managed PostgreSQL database and put its DATABASE_URL in the web service environment variables.
+- Add SESSION_SECRET, ADMIN_PASSWORD, Razorpay keys and WhatsApp credentials as environment variables.
+- Do not put secrets in index.html.
+
+RAZORPAY
+- RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET stay on the server.
+- Browser receives only the Key ID.
+- Server creates the Razorpay order and verifies signature + captured amount before marking paid.
+- Optional webhook: configure RAZORPAY_WEBHOOK_SECRET and Razorpay webhook URL /api/payment/webhook.
+
+WHATSAPP
+- WHATSAPP_TOKEN and WHATSAPP_PHONE_ID are Meta WhatsApp Business Cloud API credentials.
+- Customer OTP uses an approved authentication/OTP template.
+- Order confirmation and status updates use approved templates. The exact template names/languages are configurable above.
+- Create the templates in Meta WhatsApp Manager and put their names/languages in the environment variables.
+- ADMIN_WHATSAPP should include India country code, e.g. 918434990815.
+- A direct wa.me link is not an automated bot/API; the new login and notifications use the WhatsApp Business API.
+
+IMPORTANT
+- A 5-second reply can be targeted for simple automated replies, but WhatsApp/network/API latency means it cannot be guaranteed for every message.
+- The included code handles OTP/order/status API integration. It does not create or verify your Meta Business account or templates for you.
+
+WHATSAPP WEBHOOK FOR FAST ENQUIRY REPLIES
+- Set WHATSAPP_VERIFY_TOKEN.
+- Configure the Meta webhook callback URL as: https://YOUR-RENDER-DOMAIN/api/whatsapp/webhook
+- Subscribe to the WhatsApp messages webhook event.
+- The server sends an immediate canned response for common product/price/order/bulk questions. Network/provider latency means an exact 5-second guarantee is not possible.
