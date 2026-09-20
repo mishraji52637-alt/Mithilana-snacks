@@ -122,8 +122,6 @@ app.get('/api/admin/orders',adminAuth,async(_req,res)=>{const orders=await getOr
 app.patch('/api/admin/orders/:orderNo',adminAuth,async(req,res)=>{if(!STATUS.includes(req.body?.orderStatus))return res.status(400).json({error:'Invalid order status.'});const old=await findOrder(req.params.orderNo);if(!old)return res.status(404).json({error:'Order not found.'});if(old.orderStatus===req.body.orderStatus)return res.json({ok:true,order:old});const updated=await updateOrder(req.params.orderNo,{orderStatus:req.body.orderStatus});try{await notifyStatus(updated);}catch(_){}res.json({ok:true,order:updated});});
 
 app.get('/admin',(_req,res)=>res.sendFile(path.join(ROOT,'admin.html')));
-app.get('*',(_req,res)=>res.sendFile(path.join(ROOT,'index.html')));
-initDb().then(()=>app.listen(PORT,()=>console.log(`Mithilana server running on port ${PORT}${pool?' with PostgreSQL':' with JSON storage'}`))).catch(e=>{console.error('Database initialization failed:',e);process.exit(1);});
 // WhatsApp Webhook Setup
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
@@ -140,3 +138,5 @@ app.get('/webhook', (req, res) => {
 app.post('/webhook', (req, res) => {
   res.status(200).send('EVENT_RECEIVED');
 });
+app.get('*',(_req,res)=>res.sendFile(path.join(ROOT,'index.html')));
+initDb().then(()=>app.listen(PORT,()=>console.log(`Mithilana server running on port ${PORT}${pool?' with PostgreSQL':' with JSON storage'}`))).catch(e=>{console.error('Database initialization failed:',e);process.exit(1);});
