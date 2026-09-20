@@ -4,7 +4,14 @@
   "private": true,
   "description": "Mithilana Makhana direct website ordering, Razorpay, persistent customer login and WhatsApp automation.",
   "main": "server.js",
-  "scripts": {"start":"node server.js"},
-  "engines": {"node": ">=18"},
-  "dependencies": {"express":"^4.21.2","pg":"^8.16.3"}
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "pg": "^8.16.3"
+  }
 }
